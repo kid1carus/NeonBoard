@@ -9,9 +9,7 @@ NSString *basePath;
 UIImage *dot;
 UIImage *currentDot;
 
-- (UIImage *)_iconListIndicatorImage:(BOOL)enabled {
-  return ((enabled) ? currentDot : dot) ? : %orig;
-}
+- (UIImage *)_iconListIndicatorImage:(BOOL)enabled { return ((enabled) ? currentDot : dot) ? : %orig; }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   dot = [UIImage imageWithContentsOfFile:[%c(Neon) fullPathForImageNamed:@"Dot_PagesSB" atPath:basePath]];
@@ -25,6 +23,12 @@ UIImage *currentDot;
 
 %end
 
+%group iOS14
+%hook _UIInteractivePageControlVisualProvider
+- (UIImage *)indicatorImageForPage:(NSInteger)page { return dot; }
+%end
+%end
+
 %ctor {
   if (!%c(Neon)) dlopen("/Library/MobileSubstrate/DynamicLibraries/NeonEngine.dylib", RTLD_LAZY);
   if (!%c(Neon) || ![%c(Neon) themes]) return;
@@ -35,7 +39,7 @@ UIImage *currentDot;
     if ([[NSFileManager defaultManager] fileExistsAtPath:path1 isDirectory:nil] || [[NSFileManager defaultManager] fileExistsAtPath:path2 isDirectory:nil]) continue;
     else [mutableThemes removeObjectAtIndex:i];
   }
-	if (mutableThemes && mutableThemes.count > 0) {
+  if (mutableThemes && mutableThemes.count > 0) {
     for (NSString *theme in mutableThemes) {
       for (NSString *folder in @[@"ANEMPageDots", @"Bundles/com.magicdots.images"]) {
         basePath = [NSString stringWithFormat:@"/Library/Themes/%@/%@/", theme, folder];
@@ -44,5 +48,6 @@ UIImage *currentDot;
       if (basePath) break;
     }
     %init(Dots);
+    if (kCFCoreFoundationVersionNumber >= 1740) %init(iOS14);
   }
 }

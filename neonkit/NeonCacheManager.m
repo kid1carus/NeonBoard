@@ -9,14 +9,21 @@
   if (scale > 1) name = [NSString stringWithFormat:@"%@@%d", name, (int)scale];
   NSString *path = [NSString stringWithFormat:@"%@/%@/%@x.png", @cacheDir, bundleID, name];
   if (![[NSFileManager defaultManager] fileExistsAtPath:path.stringByDeletingLastPathComponent])
-		[[NSFileManager defaultManager] createDirectoryAtPath:path.stringByDeletingLastPathComponent withIntermediateDirectories:YES attributes:@{NSFilePosixPermissions: @0777} error:nil];
-	[UIImagePNGRepresentation(image) writeToFile:path atomically:YES];
+    [[NSFileManager defaultManager] createDirectoryAtPath:path.stringByDeletingLastPathComponent withIntermediateDirectories:YES attributes:@{NSFilePosixPermissions: @0777} error:nil];
+  [UIImagePNGRepresentation(image) writeToFile:path atomically:YES];
 }
 
-+ (UIImage *)getCacheImage:(NSString *)name bundleID:(NSString *)bundleID {
++ (UIImage *)getCacheImage:(NSString *)name bundleID:(NSString *)bundleID  {
+  if (!bundleID) return nil;
   NSString *path = [NSString stringWithFormat:@"%@/%@/", @cacheDir, bundleID];
   if (![[NSFileManager defaultManager] fileExistsAtPath:path]) return nil;
-  return [UIImage imageNamed:name inBundle:[NSBundle bundleWithPath:path]];
+  if (kCFCoreFoundationVersionNumber <= 1280.38) {
+    NSString *customPath = [NSClassFromString(@"Neon") fullPathForImageNamed:name atPath:path];
+    UIImage *img = [UIImage imageWithContentsOfFile:customPath];
+    //return [UIImage imageWithCGImage:img.CGImage scale:[UIScreen mainScreen].scale orientation:UIImageOrientationUp];
+    return img;
+  }
+  else return [UIImage imageNamed:name inBundle:[NSBundle bundleWithPath:path]];
 }
 
 // what is this? well....
@@ -35,6 +42,7 @@ NSCache *unthemedCache;
 }
 
 + (void)addUnthemedImageName:(NSString *)name bundleID:(NSString *)bundleID {
+  if (!bundleID) return;
   if (!unthemedCache) unthemedCache = [NSCache new];
   NSMutableArray *arr = [unthemedCache objectForKey:bundleID] ? : [NSMutableArray new];
   [arr addObject:name];

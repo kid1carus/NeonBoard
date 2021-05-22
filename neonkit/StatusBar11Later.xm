@@ -2,8 +2,6 @@
 
 #include "../Neon.h"
 
-// the battery is a mess, and i hate it, however, it can't really be done better (unless someone points out a solution for the bug i described lower)
-
 @interface _UIStatusBarSignalView : UIView
 @property (nonatomic, assign) long long numberOfActiveBars;
 @property (nonatomic, copy) UIColor *activeColor;
@@ -44,6 +42,8 @@
 
 %group Cellular
 %hook _UIStatusBarCellularSignalView
+// so this was causing a crash and i just disabled it now crash doesnt happen pogchamp
+- (void)_updateCycleAnimationNow {}
 - (void)_updateActiveBars { [self updateCustomLayerWithImageName:@"Bars"]; }
 %end
 %end
@@ -88,7 +88,7 @@
 
 - (CALayer *)pinLayer { return nil; }
 - (CALayer *)bodyLayer { return nil; }
-- (CALayer *)boltLayer { return nil; }
+- (CALayer *)boltLayer { return (self.customBoltImage) ? nil : %orig; }
 
 - (instancetype)initWithFrame:(CGRect)frame {
   self = %orig;
@@ -111,7 +111,7 @@
   self.customFillLayer.mask = mask;
   [self.layer addSublayer:self.customFillLayer];
   self.customBoltLayer = [CALayer layer];
-  self.customBoltImage = [[self.assetManager neonImageNamed:@"Black_BatteryChargingAccessory" originalImage:nil configuration:nil] _flatImageWithColor:[UIColor whiteColor]];
+  self.customBoltImage = [[self.assetManager neonImageNamed:@"Black_BatteryChargingAccessory" originalImage:nil configuration:nil] _flatImageWithColor:self.bodyColor];
   self.customBoltLayer.contents = (id)self.customBoltImage.CGImage;
   self.customBoltLayer.hidden = self.chargingState != 0;
   return self;
@@ -129,12 +129,16 @@
   self.customFillLayer.contents = (id)self.customFillImage.CGImage;
 }
 
-- (void)_updateBolt { self.customBoltLayer.hidden = self.chargingState != 0; }
+- (void)_updateBolt {
+  if (!self.customBoltImage) %orig;
+  else self.customBoltLayer.hidden = self.chargingState != 0;
+}
 
 %end
 %end
 
 // %init (Battery, _UIBatteryView = BatteryClass) just gave a bunch of errors; frick it.
+// turns out i'm not the only one with the issue, and nobody cares it seems https://github.com/theos/logos/issues/43
 %group Battery13
 %hook _UIStaticBatteryView
 
@@ -177,7 +181,10 @@
   self.customFillLayer.contents = (id)self.customFillImage.CGImage;
 }
 
-- (void)_updateBolt { self.customBoltLayer.hidden = self.chargingState != 0; }
+- (void)_updateBolt {
+  if (!self.customBoltImage) %orig;
+  else self.customBoltLayer.hidden = self.chargingState != 0;
+}
 
 %end
 %end

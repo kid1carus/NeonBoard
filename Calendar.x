@@ -94,19 +94,20 @@ void fixupColor(NSMutableDictionary *dict, NSString *key) { if (dict[key]) [dict
   if ([[NSFileManager defaultManager] fileExistsAtPath:@"/Library/MobileSubstrate/DynamicLibraries/Valentine.dylib"]) return;
   if (!%c(Neon)) dlopen("/Library/MobileSubstrate/DynamicLibraries/NeonEngine.dylib", RTLD_LAZY);
   if (!%c(Neon)) return;
+  dlopen("/Library/MobileSubstrate/DynamicLibraries/NeonKit.dylib", RTLD_LAZY);
 
   if (![%c(Neon) prefs]) return;
   NSString *overrideTheme = [[%c(Neon) overrideThemes] objectForKey:@"com.apple.mobilecal"];
   if (overrideTheme) {
     if ([overrideTheme isEqualToString:@"none"]) return;
     NSString *path = [NSString stringWithFormat:@"/Library/Themes/%@/Info.plist", overrideTheme];
-		if ([[NSFileManager defaultManager] fileExistsAtPath:path]) loadPrefsForInfoPath(path);
+    if ([[NSFileManager defaultManager] fileExistsAtPath:path]) loadPrefsForInfoPath(path);
   } else {
     for (NSString *theme in [%c(Neon) themes]) {
-  		NSString *path = [NSString stringWithFormat:@"/Library/Themes/%@/Info.plist", theme];
+      NSString *path = [NSString stringWithFormat:@"/Library/Themes/%@/Info.plist", theme];
       if ([[NSFileManager defaultManager] fileExistsAtPath:path]) loadPrefsForInfoPath(path);
       if (dateSettings || daySettings) break;
-  	}
+    }
   }
 
   if (!dateSettings) dateSettings = [NSMutableDictionary new];
@@ -124,7 +125,7 @@ void fixupColor(NSMutableDictionary *dict, NSString *key) { if (dict[key]) [dict
   // as much as i refactor and optimize this thing, i still hate it. at the current state, it's ugly, but at least it's short :/
   for (NSMutableDictionary *dict in @[daySettings, dateSettings]) { fixupColor(dict, @"TextColor"); fixupColor(dict, @"ShadowColor"); }
 
-  if (kCFCoreFoundationVersionNumber >= 1665.15) %init(Calendar);
+    if (kCFCoreFoundationVersionNumber >= 1665.15) %init(Calendar);
   else if (kCFCoreFoundationVersionNumber >= 1348.00) %init(Calendar_1012);
   else %init(CalendarOlder);
 }
